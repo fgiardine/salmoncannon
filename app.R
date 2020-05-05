@@ -56,10 +56,10 @@ server <- function(input, output) {
         vel = sqrt(vel_x^2 + vel_y^2),
         vel_fin = sqrt(vel_fin_x^2 + vel_fin_y^2),
         position = 1,
-        #changepo
+        #change
         x = position,
-        y = position)%>%
-      filter(vel_y > vel_fin_y)
+        y = position)
+    
     ggplot(data, aes(x = time, y = vel_y)) + geom_point()
   })
   output$position <- renderImage({
