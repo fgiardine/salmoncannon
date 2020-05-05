@@ -7,7 +7,7 @@ library(ggimage)
 #change to whatever time you want
 
 
-data <- data.frame(time = c(0:5))
+data <- data.frame(time = seq(from = 0, to = 5, by = .1))
 ui <- fluidPage(
   titlePanel("Fish Cannon"),
   sidebarLayout(
@@ -21,9 +21,9 @@ ui <- fluidPage(
                  sliderInput("height",
                              "Height above water:",
                              #change to height possibilities you want
-                             min = 0,
-                             max = 150,
-                             value = 1)),
+                             min = 1,
+                             max = 3,
+                             value = 0.1)),
     mainPanel(plotOutput("plot1"),
               #add any more plots here
               imageOutput("position"),
@@ -55,12 +55,11 @@ server <- function(input, output) {
         vel_fin_y= sqrt(2*9.81*input$height+(init_velocity*sin(input$angle*3.14/180))^2),
         vel = sqrt(vel_x^2 + vel_y^2),
         vel_fin = sqrt(vel_fin_x^2 + vel_fin_y^2),
-        position = 1,
-        #change
-        x = position,
-        y = position)
+        position_x =  vel_x * time,
+        position_y = input$height + init_velocity*sin(input$angle*3.14/180)*time - 0.5*9.81*time^2)%>%
+      filter(position_y>0)
     
-    ggplot(data, aes(x = time, y = vel_y)) + geom_point()
+    ggplot(data, aes(x = time, y = vel)) + geom_point()
   })
   output$position <- renderImage({
     data <- data %>%
@@ -70,15 +69,20 @@ server <- function(input, output) {
         image = case_when(
           input$fishInput == "Salmon" ~ "https://webstockreview.net/images/salmon-clipart-salmon-alaskan-1.png",
           input$fishInput == "Shad" ~ "https://tpwd.texas.gov/fishboat/fish/images/inland_species/gizzardshad.jpg"),
-        velocity = case_when(
-          input$damInput == "Small" ~ mass * 1,
-          input$damInput == "Medium" ~ mass * 2,
-          input$damInput == "Large" ~ mass * 3),
-        position = mass * velocity * input$angle * input$height * time,
-        x = position,
-        y = position)
+        init_velocity = case_when(
+          input$damInput == "Small" ~ 10,
+          input$damInput == "Medium" ~ 16,
+          input$damInput == "Large" ~ 22),
+        vel_y= init_velocity*sin(input$angle*3.14/180)-9.81*time,
+        vel_x= init_velocity*cos(input$angle*3.14/180),
+        vel_fin_x= sqrt(2*9.81*input$height+(init_velocity*cos(input$angle*3.14/180))^2),
+        vel_fin_y= sqrt(2*9.81*input$height+(init_velocity*sin(input$angle*3.14/180))^2),
+        vel = sqrt(vel_x^2 + vel_y^2),
+        vel_fin = sqrt(vel_fin_x^2 + vel_fin_y^2),
+        position_x =  vel_x * time,
+        position_y = input$height + init_velocity*sin(input$angle*3.14/180)*time - 0.5*9.81*time^2)%>%filter(position_y>0)
     outfile <- tempfile(fileext='.gif')
-    animation <- ggplot(data, aes(x = time, y = position)) + geom_image(aes(image=image), size=.1) +
+    animation <- ggplot(data, aes(x = time, y = position_y)) + geom_image(aes(image=image), size=.1) +
       labs(title = 'Position after {frame_time} seconds') +
       transition_time(time) +
       ease_aes('linear')
