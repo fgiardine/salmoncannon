@@ -7,13 +7,13 @@ library(ggimage)
 #change to whatever time you want
 
 
-data <- data.frame(time = seq(from = 0, to = 3, by = 0.05))
-data2<-data.frame(water_vel = seq(from = 0, to = 7, by = 0.5))
-data3<-data.frame(delta = seq(from = 0, to = 1, by = 1/14))
+data <- data.frame(time = seq(from = 0, to = 3, by = 0.01))
+data2<-data.frame(water_vel = seq(from = 0, to = 7, by = 0.5),delta = seq(from = 0.01, to = 1, by = 1/15))
+
 ui <- fluidPage(
   titlePanel("Fish Cannon"),
   sidebarLayout(
-    sidebarPanel(selectInput("fishInput", "Fish Species", choices = c("Shad", "Salmon")),
+    sidebarPanel(selectInput("fishInput", "Fish Species", choices = c("American shad", "Chinook Salmon", "Sturgeon")),
                  selectInput("damInput", "Dam Size:", choices = c("Small", "Medium", "Large")),
                  sliderInput("angle",
                              "Initial angle (degrees):",
@@ -26,29 +26,39 @@ ui <- fluidPage(
                              min = 1,
                              max = 300,
                              value = 1)),
-    mainPanel(plotOutput("plot1"),
-              #add any more plots here
+    mainPanel(uiOutput("fish"),
+              plotOutput("plot1"),
               plotOutput("position"),
-              textOutput("results"),
-              plotOutput("force"))
+              tableOutput("results"))
   )
 )
 server <- function(input, output) {
+  
+  ouput$fish<-renderUI({
+    if(input$fishInput == "Chinook Salmon"){            
+      img(height = 240, width = 300, src = "https://webstockreview.net/images/salmon-clipart-salmon-alaskan-1.png")
+    }                                        
+    else if(input$populatie == "American shad"){
+      img(height = 240, width = 300, src = "https://lh3.googleusercontent.com/proxy/T3qjG1rOYyMwkk82Ei95GO8MOcoSwThg9Gvx9dPSLibhyVH6cTvHmD4dBKt-XmUR2eaITqVVPhohvzkcHEJYJHvU71W4EV0lCz4tTmYDkdXQ2HSyjL9UA8bwNnSoK48")
+    }
+
+    })
+  
   output$plot1 <- renderPlot({
     data <- data %>% 
       mutate(mass = case_when(
         #change fish weight, if add fish make sure to add to input
-        input$fishInput == "Salmon" ~ 3,
-        input$fishInput == "Shad" ~ 1),
+        input$fishInput == "Chinook Salmon" ~ 18,
+        input$fishInput == "American shad" ~ 5.5),
         image = case_when(
           #this is just the image location url, no need to download :)
           input$fishInput == "Salmon" ~ "https://webstockreview.net/images/salmon-clipart-salmon-alaskan-1.png",
           input$fishInput == "Shad" ~ "https://lh3.googleusercontent.com/proxy/T3qjG1rOYyMwkk82Ei95GO8MOcoSwThg9Gvx9dPSLibhyVH6cTvHmD4dBKt-XmUR2eaITqVVPhohvzkcHEJYJHvU71W4EV0lCz4tTmYDkdXQ2HSyjL9UA8bwNnSoK48"),
         init_velocity = case_when(
           #change to appropriate velocity
-          input$damInput == "Small" ~ 10,
-          input$damInput == "Medium" ~ 16,
-          input$damInput == "Large" ~ 22),
+          input$damInput == "Small" ~ c(3),
+          input$damInput == "Medium" ~ 5,
+          input$damInput == "Large" ~ 10),
         #change to actual formula
         vel_y= init_velocity*sin(input$angle*3.14/180)-9.81*time,
         vel_x= init_velocity*cos(input$angle*3.14/180),
@@ -68,17 +78,17 @@ server <- function(input, output) {
     data <- data %>% 
       mutate(mass = case_when(
         #change fish weight, if add fish make sure to add to input
-        input$fishInput == "Salmon" ~ 3,
-        input$fishInput == "Shad" ~ 1),
+        input$fishInput == "Chinook Salmon" ~ 18,
+        input$fishInput == "American shad" ~ 5.5),
         image = case_when(
           #this is just the image location url, no need to download :)
           input$fishInput == "Salmon" ~ "https://webstockreview.net/images/salmon-clipart-salmon-alaskan-1.png",
           input$fishInput == "Shad" ~ "https://lh3.googleusercontent.com/proxy/T3qjG1rOYyMwkk82Ei95GO8MOcoSwThg9Gvx9dPSLibhyVH6cTvHmD4dBKt-XmUR2eaITqVVPhohvzkcHEJYJHvU71W4EV0lCz4tTmYDkdXQ2HSyjL9UA8bwNnSoK48"),
         init_velocity = case_when(
           #change to appropriate velocity
-          input$damInput == "Small" ~ 10,
-          input$damInput == "Medium" ~ 16,
-          input$damInput == "Large" ~ 22),
+          input$damInput == "Small" ~ 3,
+          input$damInput == "Medium" ~ 5,
+          input$damInput == "Large" ~ 10),
         #change to actual formula
         vel_y= init_velocity*sin(input$angle*3.14/180)-9.81*time,
         vel_x= init_velocity*cos(input$angle*3.14/180),
@@ -99,60 +109,40 @@ server <- function(input, output) {
     ylab("Position (m)")
   })
   
-  output$results <- renderText({
+  output$results <- renderTable({
     data2 <- data2 %>% 
       mutate(mass = case_when(
         #change fish weight, if add fish make sure to add to input
-        input$fishInput == "Salmon" ~ 3,
-        input$fishInput == "Shad" ~ 1),
+        input$fishInput == "Chinook Salmon" ~ 18,
+        input$fishInput == "American shad" ~ 5.5),
         image = case_when(
           #this is just the image location url, no need to download :)
           input$fishInput == "Salmon" ~ "https://webstockreview.net/images/salmon-clipart-salmon-alaskan-1.png",
           input$fishInput == "Shad" ~ "https://lh3.googleusercontent.com/proxy/T3qjG1rOYyMwkk82Ei95GO8MOcoSwThg9Gvx9dPSLibhyVH6cTvHmD4dBKt-XmUR2eaITqVVPhohvzkcHEJYJHvU71W4EV0lCz4tTmYDkdXQ2HSyjL9UA8bwNnSoK48"),
         init_velocity = case_when(
           #change to appropriate velocity
-          input$damInput == "Small" ~ 10,
-          input$damInput == "Medium" ~ 16,
-          input$damInput == "Large" ~ 22),
-        #change to actual formula
-        vel_fin_x= init_velocity*cos(input$angle*3.14/180),
-        vel_fin_y= sqrt(2*9.81*input$height/100+(init_velocity*sin(input$angle*3.14/180))^2),
-        vel_fin = sqrt(vel_fin_x^2 + vel_fin_y^2),
-        impact = mass*(water_vel - vel_fin))
-    # ggplot(data2) + geom_point(aes(x = input$fishInput, y = impact, colour = "X (m)"))+
-    #   scale_colour_manual("", 
-    #                       breaks = c("X (m)"),
-    #                       values = c("magenta"))  
-    paste("Impulse (N s) ranges from min = ", round(min(data2$impact),2), "to max = ", round(max(data2$impact),2), "with a mean of",round(mean(data2$impact),2))
-  })
-  
- output$force <- renderPlot({
-    data2 <- data2 %>% 
-      mutate(mass = case_when(
-        #change fish weight, if add fish make sure to add to input
-        input$fishInput == "Salmon" ~ 3,
-        input$fishInput == "Shad" ~ 1),
-        image = case_when(
-          #this is just the image location url, no need to download :)
-          input$fishInput == "Salmon" ~ "https://webstockreview.net/images/salmon-clipart-salmon-alaskan-1.png",
-          input$fishInput == "Shad" ~ "https://lh3.googleusercontent.com/proxy/T3qjG1rOYyMwkk82Ei95GO8MOcoSwThg9Gvx9dPSLibhyVH6cTvHmD4dBKt-XmUR2eaITqVVPhohvzkcHEJYJHvU71W4EV0lCz4tTmYDkdXQ2HSyjL9UA8bwNnSoK48"),
-        init_velocity = case_when(
-          #change to appropriate velocity
-          input$damInput == "Small" ~ 10,
-          input$damInput == "Medium" ~ 16,
-          input$damInput == "Large" ~ 22),
+          input$damInput == "Small" ~ 3,
+          input$damInput == "Medium" ~ 5,
+          input$damInput == "Large" ~ 10),
         #change to actual formula
         vel_fin_x= init_velocity*cos(input$angle*3.14/180),
         vel_fin_y= sqrt(2*9.81*input$height/100+(init_velocity*sin(input$angle*3.14/180))^2),
         vel_fin = sqrt(vel_fin_x^2 + vel_fin_y^2),
         impact = mass*(water_vel - vel_fin),
-    delta = seq(from = 0, to = 1, by = 1/14),
-    force = impact/delta)
-    ggplot(data2) + geom_point(aes(x = input$fishInput, y = force, colour = "X (m)")) +
-      scale_colour_manual("", 
-                          breaks = c("X (m)"),
-                          values = c("magenta")) 
-  })}
+        force = impact/delta,
+        accel = force/mass)
+    # ggplot(data2) + geom_point(aes(x = input$fishInput, y = impact, colour = "X (m)"))+
+    #   scale_colour_manual("", 
+    #                       breaks = c("X (m)"),
+    #                       values = c("magenta"))  
+    
+    final<-data.frame("Impulse (Ns)" = data2$impact, "Force (N)" = data2$force, Acceleration = data2$accel)
+    
+  # c("Impulse (N s)","Force (N)","Acceleration (g)"))
+    #paste("Impulse (N s) ranges from min = ", round(min(data2$force),2), "to max = ", round(max(data2$force),2), "with a mean of",round(mean(data2$impact),2))
+  })
+  
+}
 
 
   # output$position <- renderImage({
