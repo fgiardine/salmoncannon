@@ -8,7 +8,8 @@ library(ggimage)
 
 
 data <- data.frame(time = seq(from = 0, to = 3, by = 0.01))
-data2<-data.frame(water_vel = seq(from = 0, to = 7, by = 0.5),delta = seq(from = 0.01, to = 1, by = 1/15))
+data2<-data.frame(time = seq(from = 0, to = 3, by = 0.01))
+
 
 ui <- fluidPage(
   titlePanel("Fish Cannon"),
@@ -26,23 +27,14 @@ ui <- fluidPage(
                              min = 1,
                              max = 300,
                              value = 1)),
-    mainPanel(uiOutput("fish"),
-              plotOutput("plot1"),
+    mainPanel(plotOutput("plot1"),
               plotOutput("position"),
               tableOutput("results"))
   )
 )
 server <- function(input, output) {
   
-  ouput$fish<-renderUI({
-    if(input$fishInput == "Chinook Salmon"){            
-      img(height = 240, width = 300, src = "https://webstockreview.net/images/salmon-clipart-salmon-alaskan-1.png")
-    }                                        
-    else if(input$populatie == "American shad"){
-      img(height = 240, width = 300, src = "https://lh3.googleusercontent.com/proxy/T3qjG1rOYyMwkk82Ei95GO8MOcoSwThg9Gvx9dPSLibhyVH6cTvHmD4dBKt-XmUR2eaITqVVPhohvzkcHEJYJHvU71W4EV0lCz4tTmYDkdXQ2HSyjL9UA8bwNnSoK48")
-    }
-
-    })
+  
   
   output$plot1 <- renderPlot({
     data <- data %>% 
@@ -110,7 +102,7 @@ server <- function(input, output) {
   })
   
   output$results <- renderTable({
-    data2 <- data2 %>% 
+    data3 <- data.frame(dummy = 1:3)%>% 
       mutate(mass = case_when(
         #change fish weight, if add fish make sure to add to input
         input$fishInput == "Chinook Salmon" ~ 18,
@@ -124,19 +116,26 @@ server <- function(input, output) {
           input$damInput == "Small" ~ 3,
           input$damInput == "Medium" ~ 5,
           input$damInput == "Large" ~ 10),
-        #change to actual formula
         vel_fin_x= init_velocity*cos(input$angle*3.14/180),
-        vel_fin_y= sqrt(2*9.81*input$height/100+(init_velocity*sin(input$angle*3.14/180))^2),
+        vel_fin_y= sqrt((2*9.81)*input$height/100+(init_velocity*sin(input$angle*3.14/180))^2),
         vel_fin = sqrt(vel_fin_x^2 + vel_fin_y^2),
+        water_vel = seq(0,max(vel_fin),length.out=3),
+        delta = seq(0.01,1.15,length.out=3),
         impact = mass*(water_vel - vel_fin),
         force = impact/delta,
-        accel = force/mass)
+        accel = force/9.81/mass)
     # ggplot(data2) + geom_point(aes(x = input$fishInput, y = impact, colour = "X (m)"))+
     #   scale_colour_manual("", 
     #                       breaks = c("X (m)"),
     #                       values = c("magenta"))  
+    data4<-data.frame("Range" = c("Max", "Middle", "Min"), "Impulse, Ns" = data3$impact, "Min Force" = data3$force/max(data3$delta), "Mean Force" = data3$force/mean(data3$delta),"Max Force" = data3$force/min(data3$delta),"Acceleration, g" = data3$accel)
     
-    final<-data.frame("Impulse (Ns)" = data2$impact, "Force (N)" = data2$force, Acceleration = data2$accel)
+    
+    
+    
+    
+    
+    #final<-data.frame("Range" = c("Max", "Middle", "Min"), "Impulse, Ns" = data3$impact, "Force, N" = data3$force, "Acceleration, g" = data3$accel)
     
   # c("Impulse (N s)","Force (N)","Acceleration (g)"))
     #paste("Impulse (N s) ranges from min = ", round(min(data2$force),2), "to max = ", round(max(data2$force),2), "with a mean of",round(mean(data2$impact),2))
